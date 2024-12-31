@@ -1,6 +1,4 @@
 // Template for Northwestern - CompEng 361 - Lab4 -- Version 1.1
-// Groupname: GeniusStudents
-// NetIDs: Vab6121, MCQ8127
 
 // Some useful defines...please add your own
 `define WORD_WIDTH 32
@@ -66,25 +64,6 @@
 `define LATENCY_MUL   4
 `define LATENCY_DIV  20
 
-/*
-module HazardDetectionUnit(
-    input [6:0] opcode,
-    input [2:0] funct3,
-    input [6:0] funct7,
-    output reg stall
-);
-    always @(*) begin
-        // Check for multiply/divide instructions
-        if (opcode == `OPCODE_COMPUTE && funct7 == `AUX_FUNC_MUL &&
-            (funct3 == `FUNC_MUL || funct3 == `FUNC_DIV || 
-             funct3 == `FUNC_REM || funct3 == `FUNC_DIVU || funct3 == `FUNC_REMU)) begin
-            stall = 1'b1; // Signal stall
-        end else begin
-            stall = 1'b0; // No stall
-        end
-    end
-endmodule
-*/
 
 
 module PipelinedCPU(halt, clk, rst);
@@ -161,27 +140,7 @@ module PipelinedCPU(halt, clk, rst);
    wire [`WORD_WIDTH-1:0] immB;
    assign immB = {{20{InstWord[31]}}, InstWord[7], InstWord[30:25], InstWord[11:8], 1'b0};
 
-    /*
-   assign branchTaken = (opcode == `OPCODE_BRANCH) && (
-                         (funct3 == `FUNC_BEQ  && (Rdata1 == Rdata2)) ||
-                         (funct3 == `FUNC_BNE  && (Rdata1 != Rdata2)) ||
-                         (funct3 == `FUNC_BLT  && ($signed(Rdata1) < $signed(Rdata2))) ||
-                         (funct3 == `FUNC_BGE  && ($signed(Rdata1) >= $signed(Rdata2))) ||
-                         (funct3 == `FUNC_BLTU && (Rdata1 < Rdata2)) ||
-                         (funct3 == `FUNC_BGEU && (Rdata1 >= Rdata2))
-                     );
-                     */
-
-    /* - idk where to put NPC?
-   // Fetch Address Datapath
-   assign PC_Plus_4 = PC + 4;
-   assign NPC = (opcode == `OPCODE_JAL)  ? (PC + immJ) :             // JAL
-                 (branchTaken) ? (PC + immB) :                        //Branch
-                 (opcode == `OPCODE_JALR) ? ((Rdata1 + immI) & ~1) :  // JALR
-                 PC_Plus_4;  // PC + 4
-
-    */
-
+   
     //pipeline stages
 
     wire [31:0] IF_InstData;
@@ -195,74 +154,6 @@ module PipelinedCPU(halt, clk, rst);
                           32'b0;  // Default: no immediate used, but for safety
 
     wire stall;
-
-/*
-// Instantiate Hazard Detection Unit
-HazardDetectionUnit HDU (
-    .opcode(opcode),
-    .funct3(funct3),
-    .funct7(funct7),
-    .stall(stall)
-);
-
-reg [`WORD_WIDTH-1:0] IF_ID_PC, IF_ID_Inst;
-reg [`WORD_WIDTH-1:0] ID_EX_PC, ID_EX_Inst, ID_EX_Rdata1, ID_EX_Rdata2, ID_EX_Imm;
-reg [4:0] ID_EX_Rsrc1, ID_EX_Rsrc2, ID_EX_Rdst;
-reg [2:0] ID_EX_funct3;
-reg [6:0] ID_EX_funct7, ID_EX_opcode;
-
-// Control logic for stalls
-always @(posedge clk or posedge rst) begin
-    if (rst || halt) begin
-        // Reset pipeline registers
-        IF_ID_PC <= 0;
-        IF_ID_Inst <= 0;
-        ID_EX_PC <= 0;
-        ID_EX_Inst <= 0;
-        ID_EX_Rdata1 <= 0;
-        ID_EX_Rdata2 <= 0;
-        ID_EX_Imm <= 0;
-        ID_EX_Rsrc1 <= 0;
-        ID_EX_Rsrc2 <= 0;
-        ID_EX_Rdst <= 0;
-        ID_EX_funct3 <= 0;
-        ID_EX_funct7 <= 0;
-        ID_EX_opcode <= 0;
-    end else if (stall) begin
-        // Hold values in current pipeline stages
-        IF_ID_PC <= IF_ID_PC;
-        IF_ID_Inst <= IF_ID_Inst;
-        ID_EX_PC <= ID_EX_PC;
-        ID_EX_Inst <= ID_EX_Inst;
-        ID_EX_Rdata1 <= ID_EX_Rdata1;
-        ID_EX_Rdata2 <= ID_EX_Rdata2;
-        ID_EX_Imm <= ID_EX_Imm;
-        ID_EX_Rsrc1 <= ID_EX_Rsrc1;
-        ID_EX_Rsrc2 <= ID_EX_Rsrc2;
-        ID_EX_Rdst <= ID_EX_Rdst;
-        ID_EX_funct3 <= ID_EX_funct3;
-        ID_EX_funct7 <= ID_EX_funct7;
-        ID_EX_opcode <= ID_EX_opcode;
-    end else begin
-        // Normal pipeline operation
-        IF_ID_PC <= PC;
-        IF_ID_Inst <= InstWord;
-        ID_EX_PC <= IF_ID_PC;
-        ID_EX_Inst <= IF_ID_Inst;
-        ID_EX_Rdata1 <= Rdata1;
-        ID_EX_Rdata2 <= Rdata2;
-        ID_EX_Imm <= Imm;
-        ID_EX_Rsrc1 <= Rsrc1;
-        ID_EX_Rsrc2 <= Rsrc2;
-        ID_EX_Rdst <= Rdst;
-        ID_EX_funct3 <= funct3;
-        ID_EX_funct7 <= funct7;
-        ID_EX_opcode <= opcode;
-    end
-end
-*/
-
-
 
     //instruction fetch 
     InstructionFetch IF (
@@ -410,13 +301,7 @@ module InstructionFetch (
     assign InstWord_out = InstWord_in; //used for debugging mostly - should be getting right InstWord
     assign IF_PC_Plus_4 = PC_in + 4;
     
-    //I don't think this is needed 
-    /* Undo later - do everything but branches/jumps first
-    assign NPC_IF = (opcode == `OPCODE_JALR) ? (Rdata1 + selected_NPC_imm) & ~1 :  // Handle JALR
-                ((opcode == `OPCODE_JAL) || (opcode == `OPCODE_BRANCH)) ? (PC_in + selected_NPC_imm) : // Handle normal cases (JAL, Branch)
-                IF_PC_Plus_4;  // Default to PC + 4
-                */
-    //assign NPC = NPC_IF;
+
 
 
     assign NPC_IF = PC_in + 4;
